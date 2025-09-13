@@ -379,9 +379,10 @@ function spawnBullet() {
             ctx.save();
             ctx.beginPath();
             ctx.rect(enemy.x, enemy.y, 35, 35);
-            ctx.fillStyle = ctx.createLinearGradient(enemy.x, enemy.y, enemy.x + 35, enemy.y + 35);
-            ctx.fillStyle.addColorStop(0, '#f72585');
-            ctx.fillStyle.addColorStop(1, '#7209b7');
+            const gradient = ctx.createLinearGradient(enemy.x, enemy.y, enemy.x + 35, enemy.y + 35);
+            gradient.addColorStop(0, '#f72585');
+            gradient.addColorStop(1, '#7209b7');
+            ctx.fillStyle = gradient;
             ctx.shadowColor = 'rgba(247,37,133,0.7)';
             ctx.shadowBlur = 10;
             ctx.fill();
