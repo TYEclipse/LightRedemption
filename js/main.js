@@ -58,7 +58,7 @@ function updateEnergyBar() {
     if (!energyBar || !energyText) return;
     const val = Math.max(0, Math.min(100, Math.round(energy)));
     energyBar.style.width = `${val}%`;
-    energyText.textContent = `能量: ${val}%`;
+    energyText.textContent = `Energy: ${val}%`;
 }
 
 function updateBackground() {
