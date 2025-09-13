@@ -425,7 +425,7 @@ function spawnBullet() {
         if (keys['ArrowLeft'] && playerX > 0) playerX -= playerSpeed;
         if (keys['ArrowRight'] && playerX < gameWidth - 40) playerX += playerSpeed;
         bulletSpawnTimer++;
-        bulletSpawnTimer++;
+        // bulletSpawnTimer++; // Removed duplicate increment
         if (bulletSpawnTimer > bulletFireRate) { // 使用变量控制发射速率
             spawnBullet();
             bulletSpawnTimer = 0;
