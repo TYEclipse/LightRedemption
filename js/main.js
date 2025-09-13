@@ -347,19 +347,16 @@ function spawnBullet() {
     const ctx = canvas.getContext('2d');
     function drawPlayer() {
         ctx.save();
-        function drawPlayer() {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(playerX + 20, playerY + 20, 20, 0, Math.PI * 2);
-            const gradient = ctx.createLinearGradient(playerX, playerY, playerX + 40, playerY + 40);
-            gradient.addColorStop(0, '#4361ee');
-            gradient.addColorStop(1, '#3a0ca3');
-            ctx.fillStyle = gradient;
-            ctx.shadowColor = 'rgba(67,97,238,0.8)';
-            ctx.shadowBlur = 15;
-            ctx.fill();
-            ctx.restore();
-        }
+        ctx.beginPath();
+        ctx.arc(playerX + 20, playerY + 20, 20, 0, Math.PI * 2);
+        const gradient = ctx.createLinearGradient(playerX, playerY, playerX + 40, playerY + 40);
+        gradient.addColorStop(0, '#4361ee');
+        gradient.addColorStop(1, '#3a0ca3');
+        ctx.fillStyle = gradient;
+        ctx.shadowColor = 'rgba(67,97,238,0.8)';
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.restore();
     }
 
     function drawFragments() {
