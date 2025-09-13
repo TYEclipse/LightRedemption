@@ -45,7 +45,7 @@ let activeUpgrades = {}; // Global record of enabled buffs/debuffs
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
-// 工具函数：圆形碰撞检测
+// Utility function: circular collision detection
 function checkCollision(ax, ay, ar, bx, by, br) {
     const dx = ax - bx;
     const dy = ay - by;
