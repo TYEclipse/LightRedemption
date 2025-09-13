@@ -223,7 +223,6 @@ function spawnBullet() {
         };
     }
     // 找到最近的敌人
-    // 找到最近的敌人
     let closestEnemy = null;
     let minDistance = Infinity;
     let closestDx = 0;
