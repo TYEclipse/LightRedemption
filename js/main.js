@@ -258,26 +258,6 @@ function spawnBullet() {
     updateEnergyBar();
 
     // 更新背景（根据难度）
-    function updateBackground() {
-        const hue = 200 + level * 5;
-        gameContainer.style.background = `linear-gradient(to bottom, hsl(${hue}, 70%, 20%), hsl(${hue + 20}, 70%, 10%))`;
-    }
-
-    // 更新能量条
-    function updateEnergyBar() {
-        energyBar.style.width = Math.min(energy, 100) + '%'; // 限制最大宽度为100%
-        energyText.textContent = `能量: ${Math.round(energy)}%`;
-    }
-
-    // 碰撞检测（使用距离平方优化）
-    function checkCollision(x1, y1, r1, x2, y2, r2) {
-        const dx = x1 - x2;
-        const dy = y1 - y2;
-        const distanceSquared = dx * dx + dy * dy;
-        const radiusSum = r1 + r2;
-        return distanceSquared < radiusSum * radiusSum;
-    }
-
     // ------------------ 卡片系统 ------------------
 
     const upgrades = [
