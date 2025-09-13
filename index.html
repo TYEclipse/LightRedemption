@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光之救赎 - Light Redemption</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000011;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            border: 3px solid #4444ff;
+            border-radius: 10px;
+            background: #000022;
+            box-shadow: 0 0 30px #2244ff;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle, #000033 0%, #000011 100%);
+        }
+
+        .ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stats {
+            background: rgba(0, 0, 50, 0.8);
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #4444ff;
+        }
+
+        .energy-bar {
+            width: 200px;
+            height: 10px;
+            background: #333;
+            border: 1px solid #4444ff;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffff00, #ff8800);
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .game-over, .victory {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 50, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #4444ff;
+            z-index: 20;
+            display: none;
+        }
+
+        .victory {
+            border-color: #ffff00;
+        }
+
+        .game-over h2 {
+            color: #ff4444;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .victory h2 {
+            color: #ffff00;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        button {
+            background: #4444ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #6666ff;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="ui">
+            <div class="stats">
+                <div>碎片: <span id="fragments">0</span>/100</div>
+                <div>难度: <span id="level">1</span></div>
+            </div>
+            <div class="stats">
+                <div>能量:</div>
+                <div class="energy-bar">
+                    <div class="energy-fill" id="energyFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-over" id="gameOver">
+            <h2>游戏结束</h2>
+            <p>被暗渊教团击败了...</p>
+            <p>收集了 <span id="finalFragments">0</span> 个光之碎片</p>
+            <button onclick="restartGame()">重新开始</button>
+        </div>
+
+        <div class="victory" id="victory">
+            <h2>光明胜利！</h2>
+            <p>恭喜！你收集了100个光之碎片，拯救了世界！</p>
+            <button onclick="restartGame()">再玩一次</button>
+        </div>
+
+        <div class="controls">
+            使用 方向键 或 WASD 移动 | 收集金色碎片 | 躲避敌人 | 能量满时自动攻击
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = 'playing'; // playing, gameOver, victory
+        let fragments = 0;
+        let level = 1;
+        let energy = 0;
+        let maxEnergy = 100;
+        let lastShot = 0;
+        let gameStartTime = Date.now();
+
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Player
+        const player = {
+            x: 400,
+            y: 300,
+            size: 15,
+            speed: 4,
+            color: '#00ffff'
+        };
+
+        // Game objects arrays
+        let lightFragments = [];
+        let enemies = [];
+        let bullets = [];
+        let particles = [];
+
+        // Input handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Utility functions
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function distance(a, b) {
+            return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+        }
+
+        function createParticle(x, y, color, speed = 2) {
+            particles.push({
+                x, y,
+                vx: random(-speed, speed),
+                vy: random(-speed, speed),
+                color,
+                life: 1,
+                decay: 0.02,
+                size: random(2, 5)
+            });
+        }
+
+        // Game object creation
+        function createLightFragment() {
+            lightFragments.push({
+                x: random(20, canvas.width - 20),
+                y: random(20, canvas.height - 20),
+                size: 8,
+                pulse: 0,
+                collected: false
+            });
+        }
+
+        function createEnemy() {
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+            
+            switch(side) {
+                case 0: x = random(0, canvas.width); y = -20; break;
+                case 1: x = canvas.width + 20; y = random(0, canvas.height); break;
+                case 2: x = random(0, canvas.width); y = canvas.height + 20; break;
+                case 3: x = -20; y = random(0, canvas.height); break;
+            }
+
+            enemies.push({
+                x, y,
+                size: 12 + level * 2,
+                speed: 1 + level * 0.3,
+                color: '#ff4444',
+                health: 2 + level,
+                maxHealth: 2 + level
+            });
+        }
+
+        function createBullet() {
+            if (Date.now() - lastShot < 200) return; // Rate limiting
+            
+            let nearestEnemy = null;
+            let nearestDistance = Infinity;
+            
+            enemies.forEach(enemy => {
+                const dist = distance(player, enemy);
+                if (dist < nearestDistance) {
+                    nearestDistance = dist;
+                    nearestEnemy = enemy;
+                }
+            });
+
+            if (nearestEnemy) {
+                const angle = Math.atan2(nearestEnemy.y - player.y, nearestEnemy.x - player.x);
+                bullets.push({
+                    x: player.x,
+                    y: player.y,
+                    vx: Math.cos(angle) * 8,
+                    vy: Math.sin(angle) * 8,
+                    size: 4,
+                    color: '#ffff00'
+                });
+                lastShot = Date.now();
+                energy = 0;
+            }
+        }
+
+        // Update functions
+        function updatePlayer() {
+            if (gameState !== 'playing') return;
+
+            let dx = 0, dy = 0;
+            
+            if (keys['arrowleft'] || keys['a']) dx = -player.speed;
+            if (keys['arrowright'] || keys['d']) dx = player.speed;
+            if (keys['arrowup'] || keys['w']) dy = -player.speed;
+            if (keys['arrowdown'] || keys['s']) dy = player.speed;
+
+            // Normalize diagonal movement
+            if (dx !== 0 && dy !== 0) {
+                dx *= 0.707;
+                dy *= 0.707;
+            }
+
+            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x + dx));
+            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y + dy));
+        }
+
+        function updateFragments() {
+            lightFragments.forEach((fragment, index) => {
+                fragment.pulse += 0.1;
+                
+                // Check collection
+                if (!fragment.collected && distance(player, fragment) < player.size + fragment.size) {
+                    fragment.collected = true;
+                    fragments++;
+                    
+                    // Create collection particles
+                    for (let i = 0; i < 8; i++) {
+                        createParticle(fragment.x, fragment.y, '#ffff00', 4);
+                    }
+                    
+                    // Update difficulty every 10 fragments
+                    if (fragments % 10 === 0) {
+                        level = Math.floor(fragments / 10) + 1;
+                    }
+                    
+                    // Check victory
+                    if (fragments >= 100) {
+                        gameState = 'victory';
+                        document.getElementById('victory').style.display = 'block';
+                    }
+                    
+                    lightFragments.splice(index, 1);
+                }
+            });
+        }
+
+        function updateEnemies() {
+            enemies.forEach((enemy, enemyIndex) => {
+                // Move towards player
+                const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+                enemy.x += Math.cos(angle) * enemy.speed;
+                enemy.y += Math.sin(angle) * enemy.speed;
+
+                // Check collision with player
+                if (gameState === 'playing' && distance(player, enemy) < player.size + enemy.size) {
+                    gameState = 'gameOver';
+                    document.getElementById('finalFragments').textContent = fragments;
+                    document.getElementById('gameOver').style.display = 'block';
+                }
+
+                // Check collision with bullets
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (distance(bullet, enemy) < bullet.size + enemy.size) {
+                        enemy.health--;
+                        bullets.splice(bulletIndex, 1);
+                        
+                        // Create hit particles
+                        for (let i = 0; i < 5; i++) {
+                            createParticle(enemy.x, enemy.y, '#ff8800', 3);
+                        }
+
+                        if (enemy.health <= 0) {
+                            // Create death particles
+                            for (let i = 0; i < 12; i++) {
+                                createParticle(enemy.x, enemy.y, '#ff4444', 5);
+                            }
+                            enemies.splice(enemyIndex, 1);
+                        }
+                    }
+                });
+            });
+        }
+
+        function updateBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+
+                // Remove bullets that go off screen
+                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                    bullets.splice(index, 1);
+                }
+            });
+        }
+
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= particle.decay;
+                particle.vx *= 0.98;
+                particle.vy *= 0.98;
+
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+
+        function updateEnergy() {
+            if (gameState === 'playing') {
+                energy = Math.min(maxEnergy, energy + 1);
+                
+                if (energy >= maxEnergy && enemies.length > 0) {
+                    createBullet();
+                }
+            }
+        }
+
+        // Rendering functions
+        function drawPlayer() {
+            ctx.save();
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = player.color;
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawFragments() {
+            lightFragments.forEach(fragment => {
+                const pulse = Math.sin(fragment.pulse) * 0.3 + 1;
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ffff00';
+                ctx.fillStyle = '#ffff00';
+                ctx.beginPath();
+                ctx.arc(fragment.x, fragment.y, fragment.size * pulse, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = enemy.color;
+                ctx.fillStyle = enemy.color;
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Health bar
+                if (enemy.health < enemy.maxHealth) {
+                    const barWidth = enemy.size * 2;
+                    const barHeight = 4;
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(enemy.x - barWidth/2, enemy.y - enemy.size - 10, barWidth, barHeight);
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillRect(enemy.x - barWidth/2, enemy.y - enemy.size - 10, 
+                                barWidth * (enemy.health / enemy.maxHealth), barHeight);
+                }
+                ctx.restore();
+            });
+        }
+
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = bullet.color;
+                ctx.fillStyle = bullet.color;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(particle => {
+                ctx.save();
+                ctx.globalAlpha = particle.life;
+                ctx.fillStyle = particle.color;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background stars
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 123) % canvas.width;
+                const y = (i * 456) % canvas.height;
+                const opacity = Math.sin(Date.now() * 0.001 + i) * 0.3 + 0.7;
+                ctx.globalAlpha = opacity;
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // Draw game objects
+            drawFragments();
+            drawEnemies();
+            drawBullets();
+            drawParticles();
+            drawPlayer();
+        }
+
+        function updateUI() {
+            document.getElementById('fragments').textContent = fragments;
+            document.getElementById('level').textContent = level;
+            document.getElementById('energyFill').style.width = (energy / maxEnergy * 100) + '%';
+        }
+
+        // Spawning logic
+        let lastFragmentSpawn = 0;
+        let lastEnemySpawn = 0;
+
+        function handleSpawning() {
+            const now = Date.now();
+            
+            // Don't spawn enemies for the first 2 seconds
+            const gracePeriod = 2000;
+            const timeSinceStart = now - gameStartTime;
+            
+            // Spawn fragments
+            if (now - lastFragmentSpawn > 3000 && lightFragments.length < 5) {
+                createLightFragment();
+                lastFragmentSpawn = now;
+            }
+
+            // Spawn enemies (with grace period)
+            if (timeSinceStart > gracePeriod) {
+                const enemySpawnRate = Math.max(1000, 3000 - level * 200);
+                if (now - lastEnemySpawn > enemySpawnRate) {
+                    createEnemy();
+                    lastEnemySpawn = now;
+                }
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameState === 'playing') {
+                updatePlayer();
+                updateFragments();
+                updateEnemies();
+                updateBullets();
+                updateParticles();
+                updateEnergy();
+                handleSpawning();
+            }
+            
+            render();
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game control functions
+        function restartGame() {
+            gameState = 'playing';
+            fragments = 0;
+            level = 1;
+            energy = 0;
+            player.x = 400;
+            player.y = 300;
+            gameStartTime = Date.now();
+            
+            lightFragments.length = 0;
+            enemies.length = 0;
+            bullets.length = 0;
+            particles.length = 0;
+            
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('victory').style.display = 'none';
+            
+            lastFragmentSpawn = 0;
+            lastEnemySpawn = 0;
+        }
+
+        // Initialize game
+        function init() {
+            // Create initial fragments
+            for (let i = 0; i < 3; i++) {
+                createLightFragment();
+            }
+            
+            gameLoop();
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>

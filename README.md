@@ -1,2 +1,39 @@
-# LightRedemption
-A pure HTML/JS/CSS one file game. Collect fragments of light, avoid enemies of the Dark Abyss Clan, and finally restore the world's light!
+# 光之救赎 - Light Redemption
+
+一个纯 HTML/JS/CSS 一文件小游戏。收集光之碎片，躲避暗渊教团的敌人，最终恢复世界光明！
+
+## 玩法说明
+
+- 方向键或 WASD 控制角色移动
+- 收集金色碎片，每收集 10 个提升难度
+- 避免被敌人碰到，否则游戏失败
+- 能量满时自动发射子弹攻击敌人
+- 收集 100 个碎片即可胜利！
+
+## 在线试玩
+
+你可以通过开启 GitHub Pages 在线体验本游戏。
+
+## 游戏特性
+
+- 🎮 纯 HTML5 Canvas 游戏，无需外部依赖
+- 🌟 精美的视觉效果和粒子系统
+- 🎯 智能敌人 AI 和自动瞄准系统
+- 📊 渐进式难度提升机制
+- 💥 流畅的碰撞检测和战斗系统
+- 🎨 深空主题的视觉设计
+
+## 技术实现
+
+- 使用原生 JavaScript 实现游戏循环和逻辑
+- Canvas 2D API 用于图形渲染
+- CSS3 用于 UI 样式和效果
+- 完全响应式设计，适配不同屏幕尺寸
+
+## 如何开始
+
+1. 克隆仓库
+2. 使用浏览器打开 `index.html` 文件
+3. 开始游戏！
+
+或者直接访问 GitHub Pages 在线版本。
