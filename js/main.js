@@ -62,7 +62,7 @@ function updateEnergyBar() {
 }
 
 function updateBackground() {
-    // 根据难度简单调节背景明暗与色相（视觉反馈）
+    // Adjust background brightness and hue based on difficulty (visual feedback)
     const intensity = Math.min(1, 0.15 + level * 0.03);
     const colorA = `hsl(${235 - Math.min(30, level * 3)}, 60%, ${25 - intensity * 10}%)`;
     const colorB = `hsl(${210 - Math.min(20, level * 2)}, 60%, ${15 - intensity * 8}%)`;
