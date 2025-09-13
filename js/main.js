@@ -371,7 +371,6 @@ function spawnBullet() {
             ctx.shadowBlur = 15;
             ctx.fill();
             ctx.restore();
-            ctx.restore();
         });
     }
 
