@@ -640,3 +640,4 @@ function spawnBullet() {
             requestAnimationFrame(gameLoop);
         });
     });
+}
