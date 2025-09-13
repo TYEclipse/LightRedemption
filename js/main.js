@@ -39,7 +39,7 @@ let enemySpawnTimer = 0;
 let bulletSpawnTimer = 0;
 let lastFrameTime = 0;
 let fps = 0;
-let activeUpgrades = {}; // 全局记录已启用的增益/减益效果
+let activeUpgrades = {}; // Global record of enabled buffs/debuffs
 
 // Canvas元素与上下文（用于渲染）
 const canvas = document.getElementById('game-canvas');
