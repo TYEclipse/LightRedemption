@@ -41,7 +41,7 @@ let lastFrameTime = 0;
 let fps = 0;
 let activeUpgrades = {}; // Global record of enabled buffs/debuffs
 
-// Canvas元素与上下文（用于渲染）
+// Canvas element and context (for rendering)
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
